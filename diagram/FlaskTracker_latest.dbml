@@ -2,12 +2,12 @@ Table flasks_ref [headercolor: #175e7a] {
 	id integer [ pk, increment, not null, unique ]
 	original_flask_id integer [ not null ]
 	new_flask_id integer [ not null ]
-	flask_ref_type_id integer
+	flask_ref_type_id integer [ not null ]
 }
 
 Table flask_ref_type [headercolor: #175e7a] {
 	id integer [ pk, increment, not null, unique ]
-	name text
+	name text [ not null ]
 }
 
 Table boxes [headercolor: #175e7a] {
@@ -39,7 +39,7 @@ Table flasks [headercolor: #175e7a] {
 	name text [ not null ]
 	remarks text
 	broken_at timestamptz
-	Low_pressure_at timestamptz
+	low_pressure_at timestamptz
 
 	indexes {
 		(name) [ name: 'flasks_index_0' ]

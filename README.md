@@ -68,12 +68,34 @@ Types of flask relationships (e.g., "Refilled", "Replaced").
 - `id` - Primary key (auto-generated)
 - `name` - Type description
 
+#### flasks_hist
+Audit history table that automatically tracks all changes to the `flasks` table.
+- `id` - Primary key (auto-generated)
+- `flask_id` - Reference to the flask (no FK constraint to allow history retention if flask is deleted)
+- `old_name` / `new_name` - Name changes
+- `old_remarks` / `new_remarks` - Remarks changes
+- `old_broken_at` / `new_broken_at` - Broken status changes
+- `old_low_pressure_at` / `new_low_pressure_at` - Low pressure status changes
+- `operation` - Type of change: INSERT, UPDATE, or DELETE
+- `changed_at` - Timestamp of the change
+- `changed_by` - User who made the change (FK to user table)
+
+**Automatic Tracking**: This table is populated automatically by database triggers. All INSERT, UPDATE, and DELETE operations on the `flasks` table are logged.
+
+**Use Cases**:
+- Track multiple low pressure events for the same flask
+- View complete history of when a flask was marked broken
+- Audit who changed flask information and when
+- Analyze flask lifecycle patterns
+
 ## Key Features
 
 ### Flask Status Tracking
 - Track when flasks become broken or reach low pressure
-- Maintain historical status through timestamps
-- Link flasks to their replacements or refills
+- Current status stored in `flasks.broken_at` and `flasks.low_pressure_at`
+- Complete history of all status changes automatically tracked in `flasks_hist`
+- Track multiple low pressure cycles per flask through history table
+- Link broken flasks to their replacements via `flasks_ref`
 
 ### Box Shipments
 - Record when boxes are prepared for shipment
@@ -94,16 +116,34 @@ Types of flask relationships (e.g., "Refilled", "Replaced").
 ## Migrations
 Database schema migrations are stored in the `migrations/` directory:
 - `0001_initial.sql` - Initial schema creation
+- `0002_initial_fixes.sql` - Schema fixes
+- `0003_betterauth.sql` - User authentication tables and audit columns
+- `0004_unique_names.sql` - Unique constraints on flask and box names
+- `0005_flasks_history.sql` - Flask history tracking with automatic triggers
 
-To apply migrations, execute the SQL files in order against your PostgreSQL database.
+To apply migrations, execute the SQL files in order against your PostgreSQL database:
+```bash
+psql -d your_database_name -f migrations/0001_initial.sql
+psql -d your_database_name -f migrations/0002_initial_fixes.sql
+psql -d your_database_name -f migrations/0003_betterauth.sql
+psql -d your_database_name -f migrations/0004_unique_names.sql
+psql -d your_database_name -f migrations/0005_flasks_history.sql
+```
 
 ## Schema Diagram
 A visual representation of the database schema is available in the `diagram/` directory:
 - `FlaskTracker_2026-01-27T16_11_21.364Z.png` - Entity relationship diagram
 - `FlaskTracker_2026-01-27T16_09_31.586Z.json` - Diagram source data
 
+## Recent Enhancements
+- ✅ Audit columns (created_at, created_user_id, updated_at, updated_user_id) added to all tables
+- ✅ User authentication tables for tracking who makes changes
+- ✅ Unique constraints on flask and box names for data integrity
+- ✅ Automatic flask history tracking via `flasks_hist` table and triggers
+
 ## Future Enhancements
-- Addition of audit columns (created_at, created_by, updated_at, updated_by) to all tables for comprehensive change tracking
+- History tracking for other tables (boxes, box_content_headers, etc.)
+- Stored procedures for common operations (get_flask_history, validate_shipment, etc.)
 
 ## Database Setup
 

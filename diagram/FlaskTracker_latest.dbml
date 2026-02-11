@@ -48,6 +48,30 @@ Table flasks [headercolor: #175e7a] {
 	Note: 'Once flask is used in box_content_lines or flasks_ref the name cannot be updated'
 }
 
+Table flasks_hist [headercolor: #175e7a] {
+	id integer [ pk, increment, not null, unique ]
+	flask_id integer [ not null ]
+	old_name text
+	new_name text
+	old_remarks text
+	new_remarks text
+	old_broken_at timestamptz
+	new_broken_at timestamptz
+	old_low_pressure_at timestamptz
+	new_low_pressure_at timestamptz
+	operation text [ not null ]
+	changed_at timestamptz [ not null, default: `CURRENT_TIMESTAMP` ]
+	changed_by text
+
+	indexes {
+		(flask_id) [ name: 'idx_flasks_hist_flask_id' ]
+		(changed_at) [ name: 'idx_flasks_hist_changed_at' ]
+		(operation) [ name: 'idx_flasks_hist_operation' ]
+	}
+
+	Note: 'Audit history for all changes to flasks table. Automatically populated by triggers. No FK on flask_id to allow history retention even if flask is deleted.'
+}
+
 Table box_content_lines [headercolor: #175e7a] {
 	id integer [ pk, increment, not null, unique ]
 	box_content_header_id integer [ not null ]
@@ -79,4 +103,8 @@ Ref fk_box_content_lines_1 {
 
 Ref fk_box_content_lines_2 {
 	flasks.id < box_content_lines.flask_id [ delete: no action, update: no action ]
+}
+
+Ref fk_flasks_hist_changed_by {
+	"user".id < flasks_hist.changed_by [ delete: set null, update: no action ]
 }

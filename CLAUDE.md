@@ -42,7 +42,11 @@ Migrations are numbered sequentially (0001, 0002, etc.). Apply them in order.
 - `flasks.broken_at`: When flask was marked broken (NULL = not broken)
 - `flasks.Low_pressure_at`: When flask reached low pressure (NULL = normal pressure)
 
-This design enables historical analysis without separate status history tables.
+**Flask History Tracking**: The `flasks_hist` table automatically captures all changes to the `flasks` table via database triggers. This enables:
+- Tracking multiple low pressure cycles per flask
+- Complete audit trail of all flask changes
+- Historical analysis of flask lifecycle patterns
+- No application-level code needed - triggers handle everything automatically
 
 **Name Immutability Pattern**: Critical for audit trail integrity:
 - `flasks.name` becomes immutable once flask appears in `box_content_lines` or `flasks_ref`
@@ -84,14 +88,14 @@ SELECT EXISTS (
 
 ## Known Future Enhancements
 
-### Audit Columns (Not Yet Implemented)
-All tables should eventually have:
+### Audit Columns (✅ IMPLEMENTED)
+All core tables now have:
 - `created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`
-- `created_by TEXT` (or FK to users table)
+- `created_user_id TEXT` (FK to users table)
 - `updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`
-- `updated_by TEXT` (or FK to users table)
+- `updated_user_id TEXT` (FK to users table)
 
-Use triggers to auto-update `updated_at` on changes.
+Flask change history is automatically tracked in `flasks_hist` table via triggers.
 
 ### Database-Level Constraint Enforcement
 Current gaps to address:
@@ -149,6 +153,118 @@ WHERE f.id = :flask_id
 ORDER BY bch.ready_at DESC;
 ```
 
+### Flask History and Audit Trail
+
+#### View Complete Change History for a Flask
+```sql
+-- Shows all changes to a flask over time
+SELECT
+    changed_at,
+    operation,
+    old_low_pressure_at,
+    new_low_pressure_at,
+    old_broken_at,
+    new_broken_at,
+    old_name,
+    new_name,
+    changed_by
+FROM flasks_hist
+WHERE flask_id = :flask_id
+ORDER BY changed_at DESC;
+```
+
+#### Track All Low Pressure Events
+```sql
+-- Find all times a flask was marked low pressure
+SELECT
+    changed_at,
+    new_low_pressure_at,
+    changed_by
+FROM flasks_hist
+WHERE flask_id = :flask_id
+  AND new_low_pressure_at IS NOT NULL
+  AND old_low_pressure_at IS DISTINCT FROM new_low_pressure_at
+ORDER BY changed_at;
+```
+
+#### Find When Flask Was Marked Broken
+```sql
+-- Get the exact timestamp and user who marked flask as broken
+SELECT
+    changed_at,
+    new_broken_at,
+    changed_by
+FROM flasks_hist
+WHERE flask_id = :flask_id
+  AND new_broken_at IS NOT NULL
+  AND old_broken_at IS NULL
+LIMIT 1;
+```
+
+#### Audit Trail - All Changes in Date Range
+```sql
+-- View all flask changes in a specific period
+SELECT
+    fh.flask_id,
+    f.name as flask_name,
+    fh.operation,
+    fh.changed_at,
+    fh.changed_by,
+    fh.old_low_pressure_at,
+    fh.new_low_pressure_at,
+    fh.old_broken_at,
+    fh.new_broken_at
+FROM flasks_hist fh
+LEFT JOIN flasks f ON fh.flask_id = f.id
+WHERE fh.changed_at BETWEEN :start_date AND :end_date
+ORDER BY fh.changed_at DESC;
+```
+
+#### Find Flasks with Multiple Low Pressure Cycles
+```sql
+-- Identify flasks that have gone low pressure multiple times
+SELECT
+    flask_id,
+    COUNT(*) as low_pressure_count
+FROM flasks_hist
+WHERE new_low_pressure_at IS NOT NULL
+  AND old_low_pressure_at IS DISTINCT FROM new_low_pressure_at
+GROUP BY flask_id
+HAVING COUNT(*) > 1
+ORDER BY low_pressure_count DESC;
+```
+
+#### Flask Lifecycle Timeline
+```sql
+-- Complete timeline of a flask including history and shipments
+SELECT
+    'STATUS_CHANGE' as event_type,
+    fh.changed_at as event_time,
+    fh.operation as detail,
+    CASE
+        WHEN fh.new_broken_at IS NOT NULL AND fh.old_broken_at IS NULL THEN 'Marked Broken'
+        WHEN fh.new_low_pressure_at IS NOT NULL AND fh.old_low_pressure_at IS NULL THEN 'Marked Low Pressure'
+        WHEN fh.new_low_pressure_at IS NULL AND fh.old_low_pressure_at IS NOT NULL THEN 'Pressure Restored'
+        ELSE fh.operation
+    END as description
+FROM flasks_hist fh
+WHERE fh.flask_id = :flask_id
+
+UNION ALL
+
+SELECT
+    'SHIPMENT' as event_type,
+    bch.ready_at as event_time,
+    'SHIPPED' as detail,
+    'Shipped in box ' || b.name || ' to ' || COALESCE(bch.destination_text, 'unknown')
+FROM box_content_lines bcl
+JOIN box_content_headers bch ON bcl.box_content_header_id = bch.id
+JOIN boxes b ON bch.box_id = b.id
+WHERE bcl.flask_id = :flask_id AND bch.ready_at IS NOT NULL
+
+ORDER BY event_time DESC;
+```
+
 ## Technical Details
 
 - **PostgreSQL Version**: Designed for PostgreSQL 10+
@@ -166,4 +282,4 @@ ORDER BY bch.ready_at DESC;
 
 ---
 
-**Schema Version**: 0001 (initial)
+**Schema Version**: 0005 (flask history tracking added)

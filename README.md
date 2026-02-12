@@ -1,5 +1,7 @@
 # FlaskTracker Database
 
+![FlaskTracker Database Schema](diagram/FlaskTracker_latest.png)
+
 ## Overview
 FlaskTracker-db is a PostgreSQL database designed to track laboratory gas flasks and their shipments in boxes. The system maintains flask inventory, tracks flask relationships (e.g., when flasks are refilled or replaced), and manages the lifecycle of shipping boxes containing flasks.
 
@@ -21,7 +23,6 @@ Main table for tracking laboratory gas flasks.
 - `name` - Flask identifier (indexed, required)
 - `remarks` - Additional notes
 - `broken_at` - Timestamp when flask was marked as broken
-- `Low_pressure_at` - Timestamp when flask reached low pressure
 
 **Important**: Once a flask is used in `box_content_lines` or `flasks_ref`, its name cannot be updated.
 
@@ -68,33 +69,20 @@ Types of flask relationships (e.g., "Refilled", "Replaced").
 - `id` - Primary key (auto-generated)
 - `name` - Type description
 
-#### flasks_hist
-Audit history table that automatically tracks all changes to the `flasks` table.
+#### flask_low_pressure_events
+Dedicated table for tracking low pressure events for flasks.
 - `id` - Primary key (auto-generated)
-- `flask_id` - Reference to the flask (no FK constraint to allow history retention if flask is deleted)
-- `old_name` / `new_name` - Name changes
-- `old_remarks` / `new_remarks` - Remarks changes
-- `old_broken_at` / `new_broken_at` - Broken status changes
-- `old_low_pressure_at` / `new_low_pressure_at` - Low pressure status changes
-- `operation` - Type of change: INSERT, UPDATE, or DELETE
-- `changed_at` - Timestamp of the change
-- `changed_by` - User who made the change (FK to user table)
+- `flask_id` - Foreign key to flasks (required)
+- `low_pressure_at` - Timestamp when flask was marked as low pressure (required)
 
-**Automatic Tracking**: This table is populated automatically by database triggers. All INSERT, UPDATE, and DELETE operations on the `flasks` table are logged.
-
-**Use Cases**:
-- Track multiple low pressure events for the same flask
-- View complete history of when a flask was marked broken
-- Audit who changed flask information and when
-- Analyze flask lifecycle patterns
+**Purpose**: Allows tracking multiple low pressure occurrences per flask over time. Each row represents a separate low pressure event.
 
 ## Key Features
 
 ### Flask Status Tracking
-- Track when flasks become broken or reach low pressure
-- Current status stored in `flasks.broken_at` and `flasks.low_pressure_at`
-- Complete history of all status changes automatically tracked in `flasks_hist`
-- Track multiple low pressure cycles per flask through history table
+- Track when flasks become broken (stored in `flasks.broken_at`)
+- Track multiple low pressure events per flask in `flask_low_pressure_events` table
+- Each low pressure occurrence is recorded as a separate event with timestamp
 - Link broken flasks to their replacements via `flasks_ref`
 
 ### Box Shipments
@@ -119,7 +107,10 @@ Database schema migrations are stored in the `migrations/` directory:
 - `0002_initial_fixes.sql` - Schema fixes
 - `0003_betterauth.sql` - User authentication tables and audit columns
 - `0004_unique_names.sql` - Unique constraints on flask and box names
-- `0005_flasks_history.sql` - Flask history tracking with automatic triggers
+- `0005_flasks_history.sql` - Flask history tracking with automatic triggers (removed in 0008)
+- `0006_unique_flask_ref_type_name.sql` - Unique constraint on flask_ref_type.name
+- `0007_dml_flasks_ref.sql` - Data manipulation for flask references
+- `0008_refactor_low_pressure_tracking.sql` - Replace low_pressure_at column with dedicated events table
 
 To apply migrations, execute the SQL files in order against your PostgreSQL database:
 ```bash
@@ -128,22 +119,27 @@ psql -d your_database_name -f migrations/0002_initial_fixes.sql
 psql -d your_database_name -f migrations/0003_betterauth.sql
 psql -d your_database_name -f migrations/0004_unique_names.sql
 psql -d your_database_name -f migrations/0005_flasks_history.sql
+psql -d your_database_name -f migrations/0006_unique_flask_ref_type_name.sql
+psql -d your_database_name -f migrations/0007_dml_flasks_ref.sql
+psql -d your_database_name -f migrations/0008_refactor_low_pressure_tracking.sql
 ```
 
 ## Schema Diagram
 A visual representation of the database schema is available in the `diagram/` directory:
-- `FlaskTracker_2026-01-27T16_11_21.364Z.png` - Entity relationship diagram
-- `FlaskTracker_2026-01-27T16_09_31.586Z.json` - Diagram source data
+- `FlaskTracker_latest.png` - Current entity relationship diagram
+- `FlaskTracker_latest.dbml` - DBML source file for the schema diagram
 
 ## Recent Enhancements
 - ✅ Audit columns (created_at, created_user_id, updated_at, updated_user_id) added to all tables
 - ✅ User authentication tables for tracking who makes changes
 - ✅ Unique constraints on flask and box names for data integrity
-- ✅ Automatic flask history tracking via `flasks_hist` table and triggers
+- ✅ Dedicated low pressure events tracking table for multiple occurrences per flask
+- ✅ Simplified schema by removing complex history tracking mechanism
 
 ## Future Enhancements
-- History tracking for other tables (boxes, box_content_headers, etc.)
-- Stored procedures for common operations (get_flask_history, validate_shipment, etc.)
+- Consider history tracking for other tables if audit trail needed (boxes, box_content_headers, etc.)
+- Stored procedures for common operations (get_flask_low_pressure_history, validate_shipment, etc.)
+- Triggers to enforce name immutability when flasks/boxes are referenced
 
 ## Database Setup
 
@@ -167,7 +163,9 @@ A visual representation of the database schema is available in the `diagram/` di
 4. **Add Flasks to Shipment**: Create entries in `box_content_lines` linking flasks to the shipment
 5. **Mark Ready**: Update `ready_at` timestamp when box is prepared
 6. **Track Return**: Update `returned_at` timestamp when box returns
-7. **Update Flask Status**: Set `broken_at` or `Low_pressure_at` if issues are identified
+7. **Update Flask Status**:
+   - Set `broken_at` timestamp if flask is broken
+   - Add entry to `flask_low_pressure_events` if flask reaches low pressure
 8. **Record Replacement**: Create new flask and link via `flasks_ref` if flask needs replacement
 
 ## License

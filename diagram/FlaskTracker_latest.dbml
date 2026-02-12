@@ -39,37 +39,12 @@ Table flasks [headercolor: #175e7a] {
 	name text [ not null ]
 	remarks text
 	broken_at timestamptz
-	low_pressure_at timestamptz
 
 	indexes {
 		(name) [ name: 'flasks_index_0' ]
 	}
 
 	Note: 'Once flask is used in box_content_lines or flasks_ref the name cannot be updated'
-}
-
-Table flasks_hist [headercolor: #175e7a] {
-	id integer [ pk, increment, not null, unique ]
-	flask_id integer [ not null ]
-	old_name text
-	new_name text
-	old_remarks text
-	new_remarks text
-	old_broken_at timestamptz
-	new_broken_at timestamptz
-	old_low_pressure_at timestamptz
-	new_low_pressure_at timestamptz
-	operation text [ not null ]
-	changed_at timestamptz [ not null, default: `CURRENT_TIMESTAMP` ]
-	changed_by text
-
-	indexes {
-		(flask_id) [ name: 'idx_flasks_hist_flask_id' ]
-		(changed_at) [ name: 'idx_flasks_hist_changed_at' ]
-		(operation) [ name: 'idx_flasks_hist_operation' ]
-	}
-
-	Note: 'Audit history for all changes to flasks table. Automatically populated by triggers. No FK on flask_id to allow history retention even if flask is deleted.'
 }
 
 Table box_content_lines [headercolor: #175e7a] {
@@ -81,12 +56,22 @@ Table box_content_lines [headercolor: #175e7a] {
 	Note: 'box_content_header_id and flask_id should be unique'
 }
 
-Ref fk_flasks_ref_2 {
-	flasks.id < flasks_ref.new_flask_id [ delete: no action, update: no action ]
+Table flask_low_pressure_events [headercolor: #175e7a] {
+	id integer [ pk, increment, not null, unique ]
+	flask_id integer [ not null ]
+	low_pressure_at timestamptz [ not null ]
+}
+
+Ref fk_box_content_lines_2 {
+	flasks.id < box_content_lines.flask_id [ delete: no action, update: no action ]
 }
 
 Ref fk_flasks_ref_1 {
 	flasks.id < flasks_ref.original_flask_id [ delete: no action, update: no action ]
+}
+
+Ref fk_flasks_ref_2 {
+	flasks.id < flasks_ref.new_flask_id [ delete: no action, update: no action ]
 }
 
 Ref fk_flask_ref_3 {
@@ -101,10 +86,6 @@ Ref fk_box_content_lines_1 {
 	box_content_headers.id < box_content_lines.box_content_header_id [ delete: no action, update: no action ]
 }
 
-Ref fk_box_content_lines_2 {
-	flasks.id < box_content_lines.flask_id [ delete: no action, update: no action ]
-}
-
-Ref fk_flasks_hist_changed_by {
-	"user".id < flasks_hist.changed_by [ delete: set null, update: no action ]
+Ref fk_flask_low_pressure_events_1 {
+	flasks.id < flask_low_pressure_events.flask_id [ delete: no action, update: no action ]
 }

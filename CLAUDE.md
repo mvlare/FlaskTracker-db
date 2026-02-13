@@ -103,8 +103,8 @@ Current gaps to address:
 - Triggers to prevent name updates when referenced
 - Explicit UNIQUE constraints (currently documented in table comments only)
 
-### Stored Procedures
-The `procedures/` directory is empty. Candidate procedures:
+### Functions
+The `functions/` directory is empty. Candidate functions:
 - `get_flask_history(flask_id)`: Complete shipment history via joins
 - `get_flask_relationships(flask_id)`: Recursive CTE for replacement chains
 - `validate_shipment(box_id, flask_ids[])`: Pre-shipment validation

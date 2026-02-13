@@ -138,7 +138,7 @@ A visual representation of the database schema is available in the `diagram/` di
 
 ## Future Enhancements
 - Consider history tracking for other tables if audit trail needed (boxes, box_content_headers, etc.)
-- Stored procedures for common operations (get_flask_low_pressure_history, validate_shipment, etc.)
+- Functions for common operations (get_flask_low_pressure_history, validate_shipment, etc.)
 - Triggers to enforce name immutability when flasks/boxes are referenced
 
 ## Database Setup

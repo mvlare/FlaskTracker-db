@@ -1,10 +1,3 @@
-Table flasks_ref [headercolor: #175e7a] {
-	id integer [ pk, increment, not null, unique ]
-	original_flask_id integer [ not null ]
-	new_flask_id integer [ not null ]
-	flask_ref_type_id integer [ not null ]
-}
-
 Table flask_ref_type [headercolor: #175e7a] {
 	id integer [ pk, increment, not null, unique ]
 	name text [ not null ]
@@ -62,20 +55,31 @@ Table flask_low_pressure_events [headercolor: #175e7a] {
 	low_pressure_at timestamptz [ not null ]
 }
 
-Ref fk_box_content_lines_2 {
-	flasks.id < box_content_lines.flask_id [ delete: no action, update: no action ]
+Table flasks_ref [headercolor: #175e7a] {
+	id integer [ pk, increment, not null, unique ]
+	original_flask_id integer [ not null ]
+	new_flask_id integer [ not null ]
+	flask_ref_type_id integer [ not null ]
+
+	indexes {
+		(original_flask_id, new_flask_id) [ name: 'flasks_ref_unique_index_1', unique ]
+	}
 }
 
-Ref fk_flasks_ref_1 {
-	flasks.id < flasks_ref.original_flask_id [ delete: no action, update: no action ]
+Ref fk_flask_ref_3 {
+	flask_ref_type.id < flasks_ref.flask_ref_type_id [ delete: no action, update: no action ]
 }
 
 Ref fk_flasks_ref_2 {
 	flasks.id < flasks_ref.new_flask_id [ delete: no action, update: no action ]
 }
 
-Ref fk_flask_ref_3 {
-	flask_ref_type.id < flasks_ref.flask_ref_type_id [ delete: no action, update: no action ]
+Ref fk_flasks_ref_1 {
+	flasks.id < flasks_ref.original_flask_id [ delete: no action, update: no action ]
+}
+
+Ref fk_box_content_lines_2 {
+	flasks.id < box_content_lines.flask_id [ delete: no action, update: no action ]
 }
 
 Ref fk_flasks_boxes_2 {

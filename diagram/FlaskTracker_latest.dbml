@@ -46,6 +46,10 @@ Table box_content_lines [headercolor: #175e7a] {
 	flask_id integer [ not null ]
 	remarks text
 
+	indexes {
+		(box_content_header_id, flask_id) [ name: 'box_content_lines_unique_index_1', unique ]
+	}
+
 	Note: 'box_content_header_id and flask_id should be unique'
 }
 
@@ -66,6 +70,14 @@ Table flasks_ref [headercolor: #175e7a] {
 	}
 }
 
+Ref fk_box_content_lines_1 {
+	box_content_headers.id < box_content_lines.box_content_header_id [ delete: no action, update: no action ]
+}
+
+Ref fk_box_content_lines_2 {
+	flasks.id < box_content_lines.flask_id [ delete: no action, update: no action ]
+}
+
 Ref fk_flask_ref_3 {
 	flask_ref_type.id < flasks_ref.flask_ref_type_id [ delete: no action, update: no action ]
 }
@@ -78,16 +90,8 @@ Ref fk_flasks_ref_1 {
 	flasks.id < flasks_ref.original_flask_id [ delete: no action, update: no action ]
 }
 
-Ref fk_box_content_lines_2 {
-	flasks.id < box_content_lines.flask_id [ delete: no action, update: no action ]
-}
-
 Ref fk_flasks_boxes_2 {
 	boxes.id < box_content_headers.box_id [ delete: no action, update: no action ]
-}
-
-Ref fk_box_content_lines_1 {
-	box_content_headers.id < box_content_lines.box_content_header_id [ delete: no action, update: no action ]
 }
 
 Ref fk_flask_low_pressure_events_1 {

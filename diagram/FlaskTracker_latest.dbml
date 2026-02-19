@@ -67,6 +67,7 @@ Table flasks_ref [headercolor: #175e7a] {
 
 	indexes {
 		(original_flask_id, new_flask_id) [ name: 'flasks_ref_unique_index_1', unique ]
+		(new_flask_id, flask_ref_type_id) [ name: 'flasks_ref_unique_index_2', unique ]
 	}
 }
 

@@ -1,0 +1,8 @@
+-- https://neon.com/docs/manage/backup-pg-dump
+-- to install postgress with PostgerSQL server and tool:
+-- https://www.postgresql.org/download/windows/
+-- When database not needed local, then only the zip archive of the binaries:
+--  psql, pg_dump, pg_restore:
+-- https://www.enterprisedb.com/download-postgresql-binaries
+-- also add the bin dir to your PATH
+-- exports are also just fine with dbeaver export data from table to sql insert. 

@@ -45,6 +45,17 @@ Table box_content_lines [headercolor: #175e7a] {
 	box_content_header_id integer [ not null ]
 	flask_id integer [ not null ]
 	remarks text
+	sampled_at timestamptz [ note: 'sampled data in UTC time' ]
+	sampled_lat_raw text [ note: 'Sampled latitude string in Degrees and Decimal Minutes (DDM)' ]
+	sampled_lon_raw text [ note: 'Sampled longitude string in Degrees and Decimal Minutes (DDM)' ]
+	sampled_lat double precision [ note: 'sampled latitude in decimal degrees' ]
+	sampled_lon double precision [ note: 'Sampled longitude in Decimal degrees' ]
+	sampled_initial_pressure double precision [ note: 'Initial Pressure' ]
+	sampled_local_start_time time [ note: 'sampled local start time' ]
+	sampled_local_stop_flush_time time [ note: 'sampled local stop flush time' ]
+	sampled_final_pressure double precision [ note: 'sampled final pressure' ]
+	sampled_wind_speed_direction text [ note: 'sampled wind speed direction' ]
+	sampled_ship_speed_direction text [ note: 'Sampled ship speed direction' ]
 
 	indexes {
 		(box_content_header_id, flask_id) [ name: 'box_content_lines_unique_index_1', unique ]

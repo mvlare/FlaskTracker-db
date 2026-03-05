@@ -14,12 +14,12 @@ ALTER TABLE box_content_lines
     ADD COLUMN sampled_wind_speed_direction  TEXT,
     ADD COLUMN sampled_ship_speed_direction  TEXT;
 
-COMMENT ON COLUMN box_content_lines.sampled_at                    IS 'Sampled data in UTC time';
+COMMENT ON COLUMN box_content_lines.sampled_at                    IS 'sampled date (day and time) in UTC time';
 COMMENT ON COLUMN box_content_lines.sampled_lat_raw               IS 'Sampled latitude string in Degrees and Decimal Minutes (DDM)';
 COMMENT ON COLUMN box_content_lines.sampled_lon_raw               IS 'Sampled longitude string in Degrees and Decimal Minutes (DDM)';
-COMMENT ON COLUMN box_content_lines.sampled_lat                   IS 'Sampled latitude in decimal degrees';
+COMMENT ON COLUMN box_content_lines.sampled_lat                   IS 'sampled latitude in decimal degrees';
 COMMENT ON COLUMN box_content_lines.sampled_lon                   IS 'Sampled longitude in decimal degrees';
-COMMENT ON COLUMN box_content_lines.sampled_initial_pressure      IS 'Initial pressure';
+COMMENT ON COLUMN box_content_lines.sampled_initial_pressure      IS 'Sampled Initial Pressure';
 COMMENT ON COLUMN box_content_lines.sampled_local_start_time      IS 'Sampled local start time';
 COMMENT ON COLUMN box_content_lines.sampled_local_stop_flush_time IS 'Sampled local stop flush time';
 COMMENT ON COLUMN box_content_lines.sampled_final_pressure        IS 'Sampled final pressure';

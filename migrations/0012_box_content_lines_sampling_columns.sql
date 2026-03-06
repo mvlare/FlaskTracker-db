@@ -12,7 +12,8 @@ ALTER TABLE box_content_lines
     ADD COLUMN sampled_local_stop_flush_time TIME,
     ADD COLUMN sampled_final_pressure        DOUBLE PRECISION,
     ADD COLUMN sampled_wind_speed_direction  TEXT,
-    ADD COLUMN sampled_ship_speed_direction  TEXT;
+    ADD COLUMN sampled_ship_speed_direction  TEXT,
+    ADD COLUMN sampled_comments              TEXT;
 
 COMMENT ON COLUMN box_content_lines.sampled_at                    IS 'sampled date (day and time) in UTC time';
 COMMENT ON COLUMN box_content_lines.sampled_lat_raw               IS 'Sampled latitude string in Degrees and Decimal Minutes (DDM)';
@@ -25,3 +26,4 @@ COMMENT ON COLUMN box_content_lines.sampled_local_stop_flush_time IS 'Sampled lo
 COMMENT ON COLUMN box_content_lines.sampled_final_pressure        IS 'Sampled final pressure';
 COMMENT ON COLUMN box_content_lines.sampled_wind_speed_direction  IS 'Sampled wind speed direction';
 COMMENT ON COLUMN box_content_lines.sampled_ship_speed_direction  IS 'Sampled ship speed direction';
+COMMENT ON COLUMN box_content_lines.sampled_comments              IS 'sampled comments';

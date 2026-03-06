@@ -56,6 +56,7 @@ Table box_content_lines [headercolor: #175e7a] {
 	sampled_final_pressure double precision [ note: 'sampled final pressure' ]
 	sampled_wind_speed_direction text [ note: 'sampled wind speed direction' ]
 	sampled_ship_speed_direction text [ note: 'Sampled ship speed direction' ]
+	sampled_comments text [ note: 'sampled comments' ]
 
 	indexes {
 		(box_content_header_id, flask_id) [ name: 'box_content_lines_unique_index_1', unique ]

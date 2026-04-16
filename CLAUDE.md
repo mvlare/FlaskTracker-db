@@ -9,6 +9,7 @@ FlaskTracker-db is a PostgreSQL database schema for tracking laboratory gas flas
 ## Database Operations
 
 ### Applying Migrations
+
 ```bash
 psql -d your_database_name -f migrations/0001_initial.sql
 ```
@@ -16,6 +17,7 @@ psql -d your_database_name -f migrations/0001_initial.sql
 Migrations are numbered sequentially (0001, 0002, etc.). Apply them in order.
 
 ### Creating New Migrations
+
 - Never modify existing migration files
 - Create new files: `migrations/0002_description.sql`, `0003_description.sql`, etc.
 - After schema changes, regenerate ER diagrams in `diagram/`
@@ -39,16 +41,19 @@ Migrations are numbered sequentially (0001, 0002, etc.). Apply them in order.
    - Follows ERP header/lines pattern for one-to-many shipments
 
 **Status Tracking via Timestamps**: Flask status is NOT an enum field. Instead, nullable timestamp columns capture both state and when it occurred:
+
 - `flasks.broken_at`: When flask was marked broken (NULL = not broken)
 - `flasks.Low_pressure_at`: When flask reached low pressure (NULL = normal pressure)
 
 **Flask History Tracking**: The `flasks_hist` table automatically captures all changes to the `flasks` table via database triggers. This enables:
+
 - Tracking multiple low pressure cycles per flask
 - Complete audit trail of all flask changes
 - Historical analysis of flask lifecycle patterns
 - No application-level code needed - triggers handle everything automatically
 
 **Name Immutability Pattern**: Critical for audit trail integrity:
+
 - `flasks.name` becomes immutable once flask appears in `box_content_lines` or `flasks_ref`
 - `boxes.name` becomes immutable once box appears in `box_content_headers`
 - Currently enforced via table comments; application layer must validate
@@ -57,6 +62,7 @@ Migrations are numbered sequentially (0001, 0002, etc.). Apply them in order.
 ## Critical Business Rules
 
 ### Shipment Lifecycle Constraints
+
 1. **Ready before Return**: `returned_at` can only be set when `ready_at` is filled
    - Not enforced by CHECK constraint yet (application-level validation only)
 2. **Unique Active Shipment**: Only one combination of `box_id` + `ready_at` allowed
@@ -64,7 +70,9 @@ Migrations are numbered sequentially (0001, 0002, etc.). Apply them in order.
 3. **Flask Appears Once Per Shipment**: Unique `box_content_header_id` + `flask_id`
 
 ### Name Immutability Validation
+
 When implementing UPDATE operations:
+
 ```sql
 -- Check if flask name can be updated
 SELECT EXISTS (
@@ -89,7 +97,9 @@ SELECT EXISTS (
 ## Known Future Enhancements
 
 ### Audit Columns (✅ IMPLEMENTED)
+
 All core tables now have:
+
 - `created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`
 - `created_user_id TEXT` (FK to users table)
 - `updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`
@@ -98,13 +108,17 @@ All core tables now have:
 Flask change history is automatically tracked in `flasks_hist` table via triggers.
 
 ### Database-Level Constraint Enforcement
+
 Current gaps to address:
+
 - CHECK constraint for `returned_at` requiring `ready_at`: `(returned_at IS NULL OR ready_at IS NOT NULL)`
 - Triggers to prevent name updates when referenced
 - Explicit UNIQUE constraints (currently documented in table comments only)
 
 ### Functions
+
 The `functions/` directory is empty. Candidate functions:
+
 - `get_flask_history(flask_id)`: Complete shipment history via joins
 - `get_flask_relationships(flask_id)`: Recursive CTE for replacement chains
 - `validate_shipment(box_id, flask_ids[])`: Pre-shipment validation
@@ -113,6 +127,7 @@ The `functions/` directory is empty. Candidate functions:
 ## Query Patterns
 
 ### Finding Operational Flasks
+
 ```sql
 -- Operational = not broken AND not low pressure
 SELECT * FROM flasks
@@ -120,6 +135,7 @@ WHERE broken_at IS NULL AND "Low_pressure_at" IS NULL;
 ```
 
 ### Finding Active Shipments
+
 ```sql
 -- In transit = ready but not returned
 SELECT * FROM box_content_headers
@@ -127,6 +143,7 @@ WHERE ready_at IS NOT NULL AND returned_at IS NULL;
 ```
 
 ### Tracing Flask Relationships
+
 ```sql
 -- Recursive CTE needed for complete replacement chain
 WITH RECURSIVE flask_chain AS (
@@ -141,6 +158,7 @@ SELECT * FROM flask_chain;
 ```
 
 ### Flask Shipment History
+
 ```sql
 -- Join pattern: flasks → box_content_lines → box_content_headers → boxes
 SELECT f.name as flask_name, b.name as box_name,
@@ -156,6 +174,7 @@ ORDER BY bch.ready_at DESC;
 ### Flask History and Audit Trail
 
 #### View Complete Change History for a Flask
+
 ```sql
 -- Shows all changes to a flask over time
 SELECT
@@ -174,6 +193,7 @@ ORDER BY changed_at DESC;
 ```
 
 #### Track All Low Pressure Events
+
 ```sql
 -- Find all times a flask was marked low pressure
 SELECT
@@ -188,6 +208,7 @@ ORDER BY changed_at;
 ```
 
 #### Find When Flask Was Marked Broken
+
 ```sql
 -- Get the exact timestamp and user who marked flask as broken
 SELECT
@@ -202,6 +223,7 @@ LIMIT 1;
 ```
 
 #### Audit Trail - All Changes in Date Range
+
 ```sql
 -- View all flask changes in a specific period
 SELECT
@@ -221,6 +243,7 @@ ORDER BY fh.changed_at DESC;
 ```
 
 #### Find Flasks with Multiple Low Pressure Cycles
+
 ```sql
 -- Identify flasks that have gone low pressure multiple times
 SELECT
@@ -235,6 +258,7 @@ ORDER BY low_pressure_count DESC;
 ```
 
 #### Flask Lifecycle Timeline
+
 ```sql
 -- Complete timeline of a flask including history and shipments
 SELECT

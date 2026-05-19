@@ -22,6 +22,7 @@ Table box_content_headers [headercolor: #175e7a] {
 	ready_at timestamptz
 	returned_at timestamptz
 	remarks text
+	picked_up_at timestamptz
 
 	Note: '''Only 1 instance(row) of box_id and ready_at is allowed. returned_at can only be filled when ready_at is filled.
 '''
@@ -48,12 +49,12 @@ Table box_content_lines [headercolor: #175e7a] {
 	sampled_at timestamptz [ note: 'sampled date (day and time) in UTC time' ]
 	sampled_lat_raw text [ note: 'Sampled latitude string in Degrees and Decimal Minutes (DDM)' ]
 	sampled_lon_raw text [ note: 'Sampled longitude string in Degrees and Decimal Minutes (DDM)' ]
-	sampled_lat double precision [ note: 'sampled latitude in decimal degrees' ]
-	sampled_lon double precision [ note: 'Sampled longitude in decimal degrees' ]
-	sampled_initial_pressure double precision [ note: 'Sampled Initial Pressure' ]
+	sampled_lat float8 [ note: 'sampled latitude in decimal degrees' ]
+	sampled_lon float8 [ note: 'Sampled longitude in decimal degrees' ]
+	sampled_initial_pressure float8 [ note: 'Sampled Initial Pressure' ]
 	sampled_local_start_time time [ note: 'sampled local start time' ]
 	sampled_local_stop_flush_time time [ note: 'sampled local stop flush time' ]
-	sampled_final_pressure double precision [ note: 'sampled final pressure' ]
+	sampled_final_pressure float8 [ note: 'sampled final pressure' ]
 	sampled_wind_speed_direction text [ note: 'sampled wind speed direction' ]
 	sampled_ship_speed_direction text [ note: 'Sampled ship speed direction' ]
 	sampled_comments text [ note: 'sampled comments' ]
@@ -83,30 +84,30 @@ Table flasks_ref [headercolor: #175e7a] {
 	}
 }
 
-Ref fk_box_content_lines_1 {
+Ref fk_box_content_headers_id_box_content_lines {
 	box_content_headers.id < box_content_lines.box_content_header_id [ delete: no action, update: no action ]
 }
 
-Ref fk_box_content_lines_2 {
+Ref fk_flasks_id_box_content_lines {
 	flasks.id < box_content_lines.flask_id [ delete: no action, update: no action ]
 }
 
-Ref fk_flask_ref_3 {
+Ref fk_flask_ref_type_id_flasks_ref {
 	flask_ref_type.id < flasks_ref.flask_ref_type_id [ delete: no action, update: no action ]
 }
 
-Ref fk_flasks_ref_2 {
+Ref fk_flasks_id_flasks_ref {
 	flasks.id < flasks_ref.new_flask_id [ delete: no action, update: no action ]
 }
 
-Ref fk_flasks_ref_1 {
+Ref fk_flasks_id_flasks_ref {
 	flasks.id < flasks_ref.original_flask_id [ delete: no action, update: no action ]
 }
 
-Ref fk_flasks_boxes_2 {
+Ref fk_boxes_id_box_content_headers {
 	boxes.id < box_content_headers.box_id [ delete: no action, update: no action ]
 }
 
-Ref fk_flask_low_pressure_events_1 {
+Ref fk_flasks_id_flask_low_pressure_events {
 	flasks.id < flask_low_pressure_events.flask_id [ delete: no action, update: no action ]
 }
